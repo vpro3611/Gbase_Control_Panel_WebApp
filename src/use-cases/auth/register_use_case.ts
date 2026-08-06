@@ -5,6 +5,7 @@ import { OtpRepository } from '../../infrastructure/repositories/otp_repository'
 import { MailerServiceInterface } from '../../infrastructure/mail/mailer_service';
 import { User } from '../../domain/entities/user';
 import { Otp } from '../../domain/entities/otp';
+import { ConflictError, ValidationError } from '../../domain/errors/app_error';
 
 export interface RegisterInput {
   email: string;
@@ -24,7 +25,7 @@ export class RegisterUseCase {
 
     if (existingUser) {
       if (existingUser.isVerified) {
-        throw new Error('User with this email already exists and is verified');
+        throw new ConflictError('User with this email already exists and is verified');
       }
       userId = existingUser.id;
       if (input.password) {
@@ -34,7 +35,7 @@ export class RegisterUseCase {
       }
     } else {
       if (!input.password || input.password.length < 6) {
-        throw new Error('Password must be at least 6 characters long');
+        throw new ValidationError('Password must be at least 6 characters long');
       }
       const passwordHash = await bcrypt.hash(input.password, 10);
       userId = randomUUID();
@@ -48,7 +49,7 @@ export class RegisterUseCase {
     }
 
     const code = Otp.generate6DigitCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     const otp = new Otp({
       id: randomUUID(),
       userId,

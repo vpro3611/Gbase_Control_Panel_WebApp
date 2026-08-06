@@ -3,6 +3,7 @@ import { UserRepository } from '../../infrastructure/repositories/user_repositor
 import { OtpRepository } from '../../infrastructure/repositories/otp_repository';
 import { MailerServiceInterface } from '../../infrastructure/mail/mailer_service';
 import { Otp } from '../../domain/entities/otp';
+import { ConflictError, NotFoundError } from '../../domain/errors/app_error';
 
 export interface ChangeEmailInput {
   userId: string;
@@ -19,12 +20,12 @@ export class ChangeEmailUseCase {
   async execute(input: ChangeEmailInput, dbClient?: any): Promise<{ message: string }> {
     const user = await this.userRepository.findById(input.userId, dbClient);
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
 
     const existingEmailUser = await this.userRepository.findByEmail(input.newEmail, dbClient);
     if (existingEmailUser && existingEmailUser.id !== user.id) {
-      throw new Error('This email address is already in use by another account');
+      throw new ConflictError('This email address is already in use by another account');
     }
 
     const code = Otp.generate6DigitCode();

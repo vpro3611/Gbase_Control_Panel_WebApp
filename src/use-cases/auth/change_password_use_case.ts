@@ -3,6 +3,7 @@ import { UserRepository } from '../../infrastructure/repositories/user_repositor
 import { OtpRepository } from '../../infrastructure/repositories/otp_repository';
 import { MailerServiceInterface } from '../../infrastructure/mail/mailer_service';
 import { Otp } from '../../domain/entities/otp';
+import { NotFoundError } from '../../domain/errors/app_error';
 
 export interface ChangePasswordInput {
   userId: string;
@@ -18,7 +19,7 @@ export class ChangePasswordUseCase {
   async execute(input: ChangePasswordInput, dbClient?: any): Promise<{ message: string }> {
     const user = await this.userRepository.findById(input.userId, dbClient);
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
 
     const code = Otp.generate6DigitCode();

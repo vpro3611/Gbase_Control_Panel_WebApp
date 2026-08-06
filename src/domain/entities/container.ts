@@ -1,3 +1,5 @@
+import { ValidationError } from '../errors/app_error';
+
 export type ContainerStatus = 'running' | 'stopped' | 'error';
 
 export interface ContainerProps {
@@ -27,7 +29,7 @@ export class ContainerEntity {
 
   constructor(props: ContainerProps) {
     if (!props.id || !props.userId || !props.dockerContainerId) {
-      throw new Error('Invalid container parameters');
+      throw new ValidationError('Invalid container parameters');
     }
     this._id = props.id;
     this._userId = props.userId;

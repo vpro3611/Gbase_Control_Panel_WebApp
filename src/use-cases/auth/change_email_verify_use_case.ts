@@ -1,5 +1,6 @@
 import { UserRepository } from '../../infrastructure/repositories/user_repository';
 import { OtpRepository } from '../../infrastructure/repositories/otp_repository';
+import { NotFoundError, ValidationError } from '../../domain/errors/app_error';
 
 export interface ChangeEmailVerifyInput {
   userId: string;
@@ -16,12 +17,12 @@ export class ChangeEmailVerifyUseCase {
   async execute(input: ChangeEmailVerifyInput, dbClient?: any): Promise<{ message: string; email: string }> {
     const user = await this.userRepository.findById(input.userId, dbClient);
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
 
     const otp = await this.otpRepository.findLatestUnused(input.newEmail, 'CHANGE_EMAIL', dbClient);
     if (!otp || !otp.isValid(input.code, input.newEmail)) {
-      throw new Error('Invalid or expired OTP code');
+      throw new ValidationError('Invalid or expired OTP code');
     }
 
     otp.markUsed();

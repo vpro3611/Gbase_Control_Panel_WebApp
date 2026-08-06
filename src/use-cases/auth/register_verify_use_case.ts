@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { UserRepository } from '../../infrastructure/repositories/user_repository';
 import { OtpRepository } from '../../infrastructure/repositories/otp_repository';
 import { config } from '../../config/env';
+import { NotFoundError, ValidationError } from '../../domain/errors/app_error';
 
 export interface RegisterVerifyInput {
   email: string;
@@ -17,12 +18,12 @@ export class RegisterVerifyUseCase {
   async execute(input: RegisterVerifyInput, dbClient?: any): Promise<{ token: string; user: { id: string; email: string; isVerified: boolean } }> {
     const user = await this.userRepository.findByEmail(input.email, dbClient);
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
 
     const otp = await this.otpRepository.findLatestUnused(input.email, 'REGISTER', dbClient);
     if (!otp || !otp.isValid(input.code, input.email)) {
-      throw new Error('Invalid or expired OTP code');
+      throw new ValidationError('Invalid or expired OTP code');
     }
 
     otp.markUsed();

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
+import { UnauthorizedError } from '../domain/errors/app_error';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -12,8 +13,7 @@ export interface AuthenticatedRequest extends Request {
 export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ success: false, error: 'Authentication required' });
-    return;
+    return next(new UnauthorizedError('Authentication required'));
   }
 
   const token = authHeader.split(' ')[1];
@@ -22,6 +22,6 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ success: false, error: 'Invalid or expired token' });
+    next(new UnauthorizedError('Invalid or expired token'));
   }
 }

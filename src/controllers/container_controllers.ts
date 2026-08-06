@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import {
   CreateContainerTxService,
   DeleteContainerTxService,
@@ -9,7 +9,7 @@ import {
 export class CreateContainerController {
   constructor(private readonly service: CreateContainerTxService) {}
 
-  async handle(req: Request, res: Response): Promise<void> {
+  async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user.userId;
       const { name } = req.body;
@@ -26,8 +26,8 @@ export class CreateContainerController {
           createdAt: container.createdAt,
         },
       });
-    } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 }
@@ -35,14 +35,14 @@ export class CreateContainerController {
 export class DeleteContainerController {
   constructor(private readonly service: DeleteContainerTxService) {}
 
-  async handle(req: Request, res: Response): Promise<void> {
+  async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user.userId;
       const containerId = req.params.id as string;
       const result = await this.service.execute({ userId, containerId });
       res.status(200).json({ success: true, ...result });
-    } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 }
@@ -50,7 +50,7 @@ export class DeleteContainerController {
 export class ListContainersController {
   constructor(private readonly service: ListContainersTxService) {}
 
-  async handle(req: Request, res: Response): Promise<void> {
+  async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user.userId;
       const containers = await this.service.execute(userId);
@@ -66,8 +66,8 @@ export class ListContainersController {
           createdAt: c.createdAt,
         })),
       });
-    } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 }
@@ -75,7 +75,7 @@ export class ListContainersController {
 export class GetContainerInfoController {
   constructor(private readonly service: GetContainerInfoTxService) {}
 
-  async handle(req: Request, res: Response): Promise<void> {
+  async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user.userId;
       const containerId = req.params.id as string;
@@ -93,8 +93,8 @@ export class GetContainerInfoController {
         },
         details: result.details,
       });
-    } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 }

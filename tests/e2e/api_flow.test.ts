@@ -218,7 +218,7 @@ describe('GObase Control Panel E2E API Flow (Supertest)', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .send({ name: 'c4_over_limit' });
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(409);
       expect(res.body.success).toBe(false);
       expect(res.body.error).toMatch(/Maximum allowed container limit/);
     });

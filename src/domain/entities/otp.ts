@@ -1,3 +1,5 @@
+import { ValidationError } from '../errors/app_error';
+
 export type OtpType = 'REGISTER' | 'CHANGE_EMAIL' | 'CHANGE_PASSWORD';
 
 export interface OtpProps {
@@ -23,7 +25,7 @@ export class Otp {
 
   constructor(props: OtpProps) {
     if (!props.code || props.code.length !== 6) {
-      throw new Error('OTP code must be exactly 6 characters long');
+      throw new ValidationError('OTP code must be exactly 6 characters long');
     }
     this._id = props.id;
     this._userId = props.userId ?? null;
@@ -57,7 +59,7 @@ export class Otp {
 
   public markUsed(): void {
     if (this._used) {
-      throw new Error('OTP has already been used');
+      throw new ValidationError('OTP has already been used');
     }
     this._used = true;
   }

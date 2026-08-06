@@ -3,6 +3,7 @@ import { ContainerRepository } from '../../infrastructure/repositories/container
 import { DockerServiceInterface } from '../../infrastructure/docker/docker_service';
 import { ContainerEntity } from '../../domain/entities/container';
 import { config } from '../../config/env';
+import { ConflictError } from '../../domain/errors/app_error';
 
 export interface CreateContainerInput {
   userId: string;
@@ -18,7 +19,7 @@ export class CreateContainerUseCase {
   async execute(input: CreateContainerInput, dbClient?: any): Promise<ContainerEntity> {
     const activeCount = await this.containerRepository.countActiveByUserId(input.userId, dbClient);
     if (activeCount >= config.maxContainersPerUser) {
-      throw new Error(`Maximum allowed container limit reached (max ${config.maxContainersPerUser} per user)`);
+      throw new ConflictError(`Maximum allowed container limit reached (max ${config.maxContainersPerUser} per user)`);
     }
 
     const containerName = input.name || `gobase-instance-${Date.now()}`;

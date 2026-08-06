@@ -3,6 +3,7 @@ import cors from 'cors';
 import { Pool } from 'pg';
 import { initContainer, AppContainer } from './container';
 import { authMiddleware } from './middlewares/auth_middleware';
+import { errorHandler } from './middlewares/error_middleware';
 
 export function createApp(overridePool?: Pool): { app: Express; container: AppContainer } {
   const app = express();
@@ -20,22 +21,25 @@ export function createApp(overridePool?: Pool): { app: Express; container: AppCo
     });
   });
 
-  app.post('/api/auth/register', (req, res) => c.registerController.handle(req, res));
-  app.post('/api/auth/register/verify', (req, res) => c.registerVerifyController.handle(req, res));
-  app.post('/api/auth/login', (req, res) => c.loginController.handle(req, res));
-  app.post('/api/auth/oauth', (req, res) => c.oauthLoginController.handle(req, res));
+  app.post('/api/auth/register', (req, res, next) => c.registerController.handle(req, res, next));
+  app.post('/api/auth/register/verify', (req, res, next) => c.registerVerifyController.handle(req, res, next));
+  app.post('/api/auth/login', (req, res, next) => c.loginController.handle(req, res, next));
+  app.post('/api/auth/oauth', (req, res, next) => c.oauthLoginController.handle(req, res, next));
 
   // Authenticated Auth Routes
-  app.post('/api/auth/change-email', authMiddleware, (req, res) => c.changeEmailController.handle(req, res));
-  app.post('/api/auth/change-email/verify', authMiddleware, (req, res) => c.changeEmailVerifyController.handle(req, res));
-  app.post('/api/auth/change-password', authMiddleware, (req, res) => c.changePasswordController.handle(req, res));
-  app.post('/api/auth/change-password/verify', authMiddleware, (req, res) => c.changePasswordVerifyController.handle(req, res));
+  app.post('/api/auth/change-email', authMiddleware, (req, res, next) => c.changeEmailController.handle(req, res, next));
+  app.post('/api/auth/change-email/verify', authMiddleware, (req, res, next) => c.changeEmailVerifyController.handle(req, res, next));
+  app.post('/api/auth/change-password', authMiddleware, (req, res, next) => c.changePasswordController.handle(req, res, next));
+  app.post('/api/auth/change-password/verify', authMiddleware, (req, res, next) => c.changePasswordVerifyController.handle(req, res, next));
 
   // Authenticated Container Routes
-  app.post('/api/containers', authMiddleware, (req, res) => c.createContainerController.handle(req, res));
-  app.get('/api/containers', authMiddleware, (req, res) => c.listContainersController.handle(req, res));
-  app.get('/api/containers/:id', authMiddleware, (req, res) => c.getContainerInfoController.handle(req, res));
-  app.delete('/api/containers/:id', authMiddleware, (req, res) => c.deleteContainerController.handle(req, res));
+  app.post('/api/containers', authMiddleware, (req, res, next) => c.createContainerController.handle(req, res, next));
+  app.get('/api/containers', authMiddleware, (req, res, next) => c.listContainersController.handle(req, res, next));
+  app.get('/api/containers/:id', authMiddleware, (req, res, next) => c.getContainerInfoController.handle(req, res, next));
+  app.delete('/api/containers/:id', authMiddleware, (req, res, next) => c.deleteContainerController.handle(req, res, next));
+
+  // Centralized Error Handling Middleware
+  app.use(errorHandler);
 
   return { app, container };
 }

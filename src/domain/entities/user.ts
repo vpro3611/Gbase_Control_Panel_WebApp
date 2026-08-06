@@ -1,3 +1,5 @@
+import { ValidationError } from '../errors/app_error';
+
 export interface UserProps {
   id: string;
   email: string;
@@ -21,7 +23,7 @@ export class User {
 
   constructor(props: UserProps) {
     if (!props.email || !props.email.includes('@')) {
-      throw new Error('Invalid user email address format');
+      throw new ValidationError('Invalid user email address format');
     }
     this._id = props.id;
     this._email = props.email.toLowerCase().trim();
@@ -49,7 +51,7 @@ export class User {
 
   public updateEmail(newEmail: string): void {
     if (!newEmail || !newEmail.includes('@')) {
-      throw new Error('Invalid email address format');
+      throw new ValidationError('Invalid email address format');
     }
     this._email = newEmail.toLowerCase().trim();
     this._updatedAt = new Date();
@@ -57,7 +59,7 @@ export class User {
 
   public updatePassword(newPasswordHash: string): void {
     if (!newPasswordHash) {
-      throw new Error('Password hash cannot be empty');
+      throw new ValidationError('Password hash cannot be empty');
     }
     this._passwordHash = newPasswordHash;
     this._updatedAt = new Date();
