@@ -2,9 +2,11 @@
   <div class="auth-container">
     <div class="auth-box glass-card">
       <div class="auth-header">
-        <div class="logo">⚡</div>
-        <h2>Welcome to GObase Control Panel</h2>
-        <p>Manage your in-memory database Docker containers seamlessly</p>
+        <div class="auth-logo-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <h2>Welcome to GObase</h2>
+        <p>Manage isolated in-memory database containers seamlessly</p>
       </div>
 
       <div class="auth-tabs">
@@ -223,13 +225,23 @@ async function handleOAuth(provider: 'google' | 'github') {
   margin-bottom: 28px;
 }
 
-.logo {
-  font-size: 32px;
-  margin-bottom: 8px;
+.auth-logo-badge {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  color: #040914;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 25px var(--primary-glow);
 }
 
 .auth-header h2 {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
   margin-bottom: 6px;
 }
 
