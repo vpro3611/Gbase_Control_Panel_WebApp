@@ -6,6 +6,9 @@ import { config } from '../../config/env';
 export interface CreateContainerOptions {
   name: string;
   userId: string;
+  excludePorts?: number[];
+  portRangeStart?: number;
+  portRangeEnd?: number;
 }
 
 export interface ContainerInfoDetails {
@@ -22,7 +25,7 @@ export interface ContainerInfoDetails {
 export interface DockerServiceInterface {
   createAndStartContainer(options: CreateContainerOptions): Promise<{ containerId: string; port: number; hostInfo: string }>;
   stopAndRemoveContainer(containerId: string): Promise<void>;
-  getContainerDetails(containerId: string): Promise<ContainerInfoDetails | null>;
+  getContainerDetails(containerId: string, fallbackPort?: number): Promise<ContainerInfoDetails | null>;
 }
 
 export class DockerService implements DockerServiceInterface {
@@ -32,21 +35,36 @@ export class DockerService implements DockerServiceInterface {
     this.docker = new Docker();
   }
 
-  private async findFreePort(startPort: number = 6381): Promise<number> {
-    return new Promise((resolve, reject) => {
+  private async findFreePort(
+    startPort: number = config.containerPortRangeStart,
+    endPort: number = config.containerPortRangeEnd,
+    excludePorts: Set<number> = new Set()
+  ): Promise<number> {
+    if (startPort > endPort) {
+      throw new Error(`No available container ports in configured range (${config.containerPortRangeStart}-${config.containerPortRangeEnd})`);
+    }
+
+    if (excludePorts.has(startPort)) {
+      return this.findFreePort(startPort + 1, endPort, excludePorts);
+    }
+
+    return new Promise((resolve) => {
       const server = net.createServer();
       server.listen(startPort, '0.0.0.0', () => {
         const port = (server.address() as net.AddressInfo).port;
         server.close(() => resolve(port));
       });
       server.on('error', () => {
-        resolve(this.findFreePort(startPort + 1));
+        resolve(this.findFreePort(startPort + 1, endPort, excludePorts));
       });
     });
   }
 
   async createAndStartContainer(options: CreateContainerOptions): Promise<{ containerId: string; port: number; hostInfo: string }> {
-    const hostPort = await this.findFreePort();
+    const rangeStart = options.portRangeStart ?? config.containerPortRangeStart;
+    const rangeEnd = options.portRangeEnd ?? config.containerPortRangeEnd;
+    const excludeSet = new Set(options.excludePorts || []);
+    const hostPort = await this.findFreePort(rangeStart, rangeEnd, excludeSet);
     const hostName = os.hostname();
     const cpus = os.cpus().length;
     const memoryMB = Math.round(os.totalmem() / (1024 * 1024));
@@ -107,7 +125,7 @@ export class DockerService implements DockerServiceInterface {
     }
   }
 
-  async getContainerDetails(containerId: string): Promise<ContainerInfoDetails | null> {
+  async getContainerDetails(containerId: string, fallbackPort: number = 6381): Promise<ContainerInfoDetails | null> {
     const hostName = os.hostname();
     const platform = `${os.type()} ${os.arch()}`;
     const cpus = os.cpus().length;
@@ -117,7 +135,7 @@ export class DockerService implements DockerServiceInterface {
       return {
         dockerContainerId: containerId,
         name: containerId,
-        port: 6381,
+        port: fallbackPort,
         status: 'running',
         hostName,
         platform,
@@ -132,7 +150,7 @@ export class DockerService implements DockerServiceInterface {
       return {
         dockerContainerId: containerId,
         name: data.Name.replace(/^\//, ''),
-        port: parseInt(Object.keys(data.HostConfig.PortBindings || {})[0] || '6381', 10),
+        port: parseInt(Object.keys(data.HostConfig.PortBindings || {})[0] || `${fallbackPort}`, 10),
         status: data.State.Running ? 'running' : 'stopped',
         hostName,
         platform,
@@ -143,7 +161,7 @@ export class DockerService implements DockerServiceInterface {
       return {
         dockerContainerId: containerId,
         name: containerId,
-        port: 6381,
+        port: fallbackPort,
         status: 'running',
         hostName,
         platform,

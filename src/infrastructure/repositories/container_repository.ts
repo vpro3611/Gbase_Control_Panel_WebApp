@@ -54,6 +54,12 @@ export class ContainerRepository {
     return parseInt(result.rows[0].count, 10);
   }
 
+  async getAllActivePorts(client?: PoolClient): Promise<number[]> {
+    const executor = this.getExecutor(client);
+    const result = await executor.query("SELECT port FROM containers WHERE status != 'stopped'");
+    return result.rows.map(row => Number(row.port));
+  }
+
   async deleteById(id: string, client?: PoolClient): Promise<void> {
     const executor = this.getExecutor(client);
     await executor.query('DELETE FROM containers WHERE id = $1', [id]);

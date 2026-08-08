@@ -11,6 +11,7 @@ describe('Container Use Cases (Unit Tests)', () => {
   beforeEach(() => {
     mockContainerRepo = {
       countActiveByUserId: jest.fn(),
+      getAllActivePorts: jest.fn().mockResolvedValue([6381]),
       save: jest.fn().mockResolvedValue(undefined),
       findById: jest.fn(),
       findByUserId: jest.fn(),
@@ -20,14 +21,14 @@ describe('Container Use Cases (Unit Tests)', () => {
     mockDockerService = {
       createAndStartContainer: jest.fn().mockResolvedValue({
         containerId: 'docker_c123',
-        port: 6381,
+        port: 6382,
         hostInfo: 'test-node-1 (4 CPUs, 8192 MB RAM)',
       }),
       stopAndRemoveContainer: jest.fn().mockResolvedValue(undefined),
       getContainerDetails: jest.fn().mockResolvedValue({
         dockerContainerId: 'docker_c123',
         name: 'test-container',
-        port: 6381,
+        port: 6382,
         status: 'running',
         hostName: 'test-node-1',
         platform: 'Linux x64',
@@ -38,16 +39,22 @@ describe('Container Use Cases (Unit Tests)', () => {
   });
 
   describe('CreateContainerUseCase', () => {
-    it('should create container and generate SDK connection string', async () => {
+    it('should create container and pass active ports to exclude from allocation', async () => {
       mockContainerRepo.countActiveByUserId.mockResolvedValue(1);
+      mockContainerRepo.getAllActivePorts.mockResolvedValue([6381]);
 
       const useCase = new CreateContainerUseCase(mockContainerRepo, mockDockerService);
       const container = await useCase.execute({ userId: 'u123', name: 'my-gbase-db' });
 
       expect(container).toBeDefined();
-      expect(container.connectionString).toMatch(/^gbase:\/\/.+:6381$/);
-      expect(container.port).toBe(6381);
-      expect(mockDockerService.createAndStartContainer).toHaveBeenCalled();
+      expect(container.connectionString).toMatch(/^gbase:\/\/.+:6382$/);
+      expect(container.port).toBe(6382);
+      expect(mockContainerRepo.getAllActivePorts).toHaveBeenCalled();
+      expect(mockDockerService.createAndStartContainer).toHaveBeenCalledWith({
+        name: 'my-gbase-db',
+        userId: 'u123',
+        excludePorts: [6381],
+      });
       expect(mockContainerRepo.save).toHaveBeenCalled();
     });
 

@@ -20,7 +20,7 @@ export class GetContainerInfoUseCase {
       throw new NotFoundError('Container not found or access denied');
     }
 
-    const details = await this.dockerService.getContainerDetails(container.dockerContainerId);
+    const details = await this.dockerService.getContainerDetails(container.dockerContainerId, container.port);
     return {
       container,
       details,

@@ -25,6 +25,8 @@ export interface Config {
   githubClientSecret: string;
   publicHost: string;
   gobaseDockerImage: string;
+  containerPortRangeStart: number;
+  containerPortRangeEnd: number;
 }
 
 export const config: Config = {
@@ -49,4 +51,6 @@ export const config: Config = {
   githubClientSecret: process.env.GITHUB_CLIENT_SECRET || '',
   publicHost: process.env.PUBLIC_HOST || '127.0.0.1',
   gobaseDockerImage: process.env.GOBASE_DOCKER_IMAGE || 'gobase-server:latest',
+  containerPortRangeStart: parseInt(process.env.CONTAINER_PORT_RANGE_START || '6381', 10),
+  containerPortRangeEnd: parseInt(process.env.CONTAINER_PORT_RANGE_END || '7381', 10),
 };

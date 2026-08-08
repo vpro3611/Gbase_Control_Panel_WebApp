@@ -23,9 +23,12 @@ export class CreateContainerUseCase {
     }
 
     const containerName = input.name || `gobase-instance-${Date.now()}`;
+    const activePorts = await this.containerRepository.getAllActivePorts(dbClient);
+
     const dockerResult = await this.dockerService.createAndStartContainer({
       name: containerName,
       userId: input.userId,
+      excludePorts: activePorts,
     });
 
     const connectionString = ContainerEntity.buildConnectionString(config.publicHost, dockerResult.port);
