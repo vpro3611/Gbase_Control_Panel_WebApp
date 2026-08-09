@@ -1,18 +1,81 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
     container_name: gbase_postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: gbase_cp
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-gbase_cp}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-gbase_cp}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gbase_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gbase_backend
+    restart: always
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-gbase_cp}
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER:-postgres}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGDATABASE: ${POSTGRES_DB:-gbase_cp}
+      JWT_SECRET: ${JWT_SECRET:-bC5kZmpiIHZhc0IgZi5sa2phZmJsYS4uZmJhLmxma25nbC5h}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      MAX_CONTAINERS_PER_USER: ${MAX_CONTAINERS_PER_USER:-3}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-no-reply@gbasecontrolpanel.com}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      PUBLIC_HOST: ${PUBLIC_HOST:-127.0.0.1}
+      GOBASE_DOCKER_IMAGE: ${GOBASE_DOCKER_IMAGE:-gobase-server:latest}
+      CONTAINER_PORT_RANGE_START: ${CONTAINER_PORT_RANGE_START:-6381}
+      CONTAINER_PORT_RANGE_END: ${CONTAINER_PORT_RANGE_END:-7381}
+    ports:
+      - "4000:4000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - gbase_network
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: gbase_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - gbase_network
+
+networks:
+  gbase_network:
+    driver: bridge
 
 volumes:
   pgdata:
