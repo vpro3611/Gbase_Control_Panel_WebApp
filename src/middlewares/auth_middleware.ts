@@ -11,12 +11,18 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  let token = req.cookies?.gbase_token;
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+  }
+
+  if (!token) {
     return next(new UnauthorizedError('Authentication required'));
   }
 
-  const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, config.jwtSecret) as { userId: string; email: string };
     req.user = decoded;
@@ -25,3 +31,4 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
     next(new UnauthorizedError('Invalid or expired token'));
   }
 }
+

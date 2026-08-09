@@ -41,26 +41,21 @@ import AuthView from './components/AuthView.vue';
 import ContainerDashboard from './components/ContainerDashboard.vue';
 import ChangeEmailModal from './components/ChangeEmailModal.vue';
 import ChangePasswordModal from './components/ChangePasswordModal.vue';
-import { getAuthToken, clearAuthToken } from './services/api';
+import { api } from './services/api';
 
 const user = ref<{ id: string; email: string; isVerified: boolean } | null>(null);
 
 const showChangeEmailModal = ref(false);
 const showChangePasswordModal = ref(false);
 
-onMounted(() => {
-  const token = getAuthToken();
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      user.value = {
-        id: payload.userId,
-        email: payload.email,
-        isVerified: true,
-      };
-    } catch {
-      clearAuthToken();
+onMounted(async () => {
+  try {
+    const res = await api.me();
+    if (res.user) {
+      user.value = res.user;
     }
+  } catch {
+    user.value = null;
   }
 });
 
@@ -68,9 +63,14 @@ function handleAuthenticated(u: { id: string; email: string; isVerified: boolean
   user.value = u;
 }
 
-function handleLogout() {
-  clearAuthToken();
-  user.value = null;
+async function handleLogout() {
+  try {
+    await api.logout();
+  } catch (err) {
+    console.error('Logout error:', err);
+  } finally {
+    user.value = null;
+  }
 }
 
 function handleEmailUpdated(newEmail: string) {

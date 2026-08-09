@@ -150,7 +150,7 @@ describe('GObase Control Panel E2E API Flow (Supertest)', () => {
       expect(res.body.message).toContain('6-digit OTP');
     });
 
-    it('POST /api/auth/register/verify - should verify OTP and return JWT token', async () => {
+    it('POST /api/auth/register/verify - should verify OTP and set HttpOnly gbase_token cookie', async () => {
       const sentOtp = memoryDb.otps.find(o => o.email === testEmail && o.type === 'REGISTER');
       expect(sentOtp).toBeDefined();
 
@@ -161,16 +161,38 @@ describe('GObase Control Panel E2E API Flow (Supertest)', () => {
       expect(verifyRes.status).toBe(200);
       expect(verifyRes.body.token).toBeDefined();
       authToken = verifyRes.body.token;
+
+      const setCookieHeader = verifyRes.headers['set-cookie'];
+      expect(setCookieHeader).toBeDefined();
+      expect(setCookieHeader[0]).toContain('gbase_token=');
+      expect(setCookieHeader[0].toLowerCase()).toContain('httponly');
     });
 
-    it('POST /api/auth/oauth - should authenticate via Google OAuth', async () => {
+    it('GET /api/auth/me - should return authenticated user via cookie or Bearer token', async () => {
+      const res = await request(app)
+        .get('/api/auth/me')
+        .set('Cookie', [`gbase_token=${authToken}`]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.user.email).toBe(testEmail);
+    });
+
+    it('POST /api/auth/oauth - should authenticate via Google OAuth and set cookie', async () => {
       const res = await request(app)
         .post('/api/auth/oauth')
         .send({ provider: 'google', tokenOrCode: 'valid_google_token' });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.token).toBeDefined();
+      expect(res.headers['set-cookie']).toBeDefined();
+    });
+
+    it('POST /api/auth/logout - should clear gbase_token cookie', async () => {
+      const res = await request(app).post('/api/auth/logout');
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.headers['set-cookie']).toBeDefined();
     });
   });
 

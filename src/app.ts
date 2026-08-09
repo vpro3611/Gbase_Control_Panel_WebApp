@@ -1,5 +1,6 @@
 import express, { Express } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { Pool } from 'pg';
 import { initContainer, AppContainer } from './container';
 import { authMiddleware } from './middlewares/auth_middleware';
@@ -11,6 +12,7 @@ export function createApp(overridePool?: Pool): { app: Express; container: AppCo
   const c = container.controllers;
 
   app.use(cors());
+  app.use(cookieParser());
   app.use(express.json());
 
   // Public Config & Auth Routes
@@ -25,8 +27,10 @@ export function createApp(overridePool?: Pool): { app: Express; container: AppCo
   app.post('/api/auth/register/verify', (req, res, next) => c.registerVerifyController.handle(req, res, next));
   app.post('/api/auth/login', (req, res, next) => c.loginController.handle(req, res, next));
   app.post('/api/auth/oauth', (req, res, next) => c.oauthLoginController.handle(req, res, next));
+  app.post('/api/auth/logout', (req, res, next) => c.logoutController.handle(req, res, next));
 
   // Authenticated Auth Routes
+  app.get('/api/auth/me', authMiddleware, (req, res, next) => c.meController.handle(req, res, next));
   app.post('/api/auth/change-email', authMiddleware, (req, res, next) => c.changeEmailController.handle(req, res, next));
   app.post('/api/auth/change-email/verify', authMiddleware, (req, res, next) => c.changeEmailVerifyController.handle(req, res, next));
   app.post('/api/auth/change-password', authMiddleware, (req, res, next) => c.changePasswordController.handle(req, res, next));

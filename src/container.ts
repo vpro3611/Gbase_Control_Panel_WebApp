@@ -47,6 +47,8 @@ import {
   RegisterVerifyController,
   LoginController,
   OAuthLoginController,
+  MeController,
+  LogoutController,
   ChangeEmailController,
   ChangeEmailVerifyController,
   ChangePasswordController,
@@ -67,6 +69,8 @@ export interface AppContainer {
     registerVerifyController: RegisterVerifyController;
     loginController: LoginController;
     oauthLoginController: OAuthLoginController;
+    meController: MeController;
+    logoutController: LogoutController;
     changeEmailController: ChangeEmailController;
     changeEmailVerifyController: ChangeEmailVerifyController;
     changePasswordController: ChangePasswordController;
@@ -127,6 +131,8 @@ export function initContainer(overridePool?: Pool): AppContainer {
   const registerVerifyController = new RegisterVerifyController(registerVerifyTxService);
   const loginController = new LoginController(loginTxService);
   const oauthLoginController = new OAuthLoginController(oauthLoginTxService);
+  const meController = new MeController();
+  const logoutController = new LogoutController();
   const changeEmailController = new ChangeEmailController(changeEmailTxService);
   const changeEmailVerifyController = new ChangeEmailVerifyController(changeEmailVerifyTxService);
   const changePasswordController = new ChangePasswordController(changePasswordTxService);
@@ -144,6 +150,8 @@ export function initContainer(overridePool?: Pool): AppContainer {
       registerVerifyController,
       loginController,
       oauthLoginController,
+      meController,
+      logoutController,
       changeEmailController,
       changeEmailVerifyController,
       changePasswordController,

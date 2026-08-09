@@ -83,7 +83,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { api, setAuthToken } from '../services/api';
+import { api } from '../services/api';
 import OtpModal from './OtpModal.vue';
 
 const emit = defineEmits(['authenticated']);
@@ -114,7 +114,6 @@ onMounted(async () => {
     loading.value = true;
     try {
       const res = await api.oauthLogin('github', githubCode);
-      setAuthToken(res.token);
       emit('authenticated', res.user);
     } catch (err: any) {
       errorMessage.value = err.message || 'GitHub OAuth login failed';
@@ -134,7 +133,6 @@ async function handleSubmit() {
       showOtpModal.value = true;
     } else {
       const res = await api.login(email.value, password.value);
-      setAuthToken(res.token);
       emit('authenticated', res.user);
     }
   } catch (err: any) {
@@ -148,7 +146,6 @@ async function handleOtpVerify(code: string) {
   try {
     const res = await api.verifyRegister(email.value, code);
     showOtpModal.value = false;
-    setAuthToken(res.token);
     emit('authenticated', res.user);
   } catch (err: any) {
     errorMessage.value = err.message || 'OTP Verification failed';
@@ -178,7 +175,6 @@ async function handleOAuth(provider: 'google' | 'github') {
             loading.value = true;
             try {
               const res = await api.oauthLogin('google', response.access_token);
-              setAuthToken(res.token);
               emit('authenticated', res.user);
             } catch (err: any) {
               errorMessage.value = err.message || 'Google OAuth authentication failed';

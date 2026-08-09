@@ -10,6 +10,14 @@ import {
   ChangePasswordVerifyTxService
 } from '../transaction-services/auth_tx_services';
 
+export const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  path: '/',
+};
+
 export class RegisterController {
   constructor(private readonly service: RegisterTxService) {}
 
@@ -31,6 +39,9 @@ export class RegisterVerifyController {
     try {
       const { email, code } = req.body;
       const result = await this.service.execute({ email, code });
+      if (result.token) {
+        res.cookie('gbase_token', result.token, COOKIE_OPTIONS);
+      }
       res.status(200).json({ success: true, ...result });
     } catch (error) {
       next(error);
@@ -45,6 +56,9 @@ export class LoginController {
     try {
       const { email, password } = req.body;
       const result = await this.service.execute({ email, password });
+      if (result.token) {
+        res.cookie('gbase_token', result.token, COOKIE_OPTIONS);
+      }
       res.status(200).json({ success: true, ...result });
     } catch (error) {
       next(error);
@@ -59,7 +73,44 @@ export class OAuthLoginController {
     try {
       const { provider, tokenOrCode } = req.body;
       const result = await this.service.execute({ provider, tokenOrCode });
+      if (result.token) {
+        res.cookie('gbase_token', result.token, COOKIE_OPTIONS);
+      }
       res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+export class MeController {
+  async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = (req as any).user;
+      res.status(200).json({
+        success: true,
+        user: {
+          id: user.userId,
+          email: user.email,
+          isVerified: true,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+export class LogoutController {
+  async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      res.clearCookie('gbase_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+      });
+      res.status(200).json({ success: true, message: 'Logged out successfully' });
     } catch (error) {
       next(error);
     }
