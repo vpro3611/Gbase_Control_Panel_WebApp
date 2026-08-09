@@ -31,7 +31,7 @@ export class CreateContainerUseCase {
       excludePorts: activePorts,
     });
 
-    const connectionString = ContainerEntity.buildConnectionString(config.publicHost, dockerResult.port);
+    const connectionString = ContainerEntity.buildConnectionString(config.publicHost, dockerResult.port, input.userId);
 
     const container = new ContainerEntity({
       id: randomUUID(),

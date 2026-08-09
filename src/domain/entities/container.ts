@@ -64,7 +64,10 @@ export class ContainerEntity {
     this._updatedAt = new Date();
   }
 
-  public static buildConnectionString(host: string, port: number): string {
-    return `gbase://${host}:${port}`;
+  public static buildConnectionString(host: string, port: number, userId: string): string {
+    if (!userId) {
+      throw new ValidationError('User ID is required to generate connection string');
+    }
+    return `gbase://${userId}@${host}:${port}`;
   }
 }

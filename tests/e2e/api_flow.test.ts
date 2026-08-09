@@ -183,7 +183,7 @@ describe('GObase Control Panel E2E API Flow (Supertest)', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.container.connectionString).toMatch(/^gbase:\/\/.+:\d+$/);
+      expect(res.body.container.connectionString).toMatch(/^gbase:\/\/.+@.+:\d+$/);
       expect(res.body.container.port).toBeGreaterThan(0);
       createdContainerId = res.body.container.id;
     });

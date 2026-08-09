@@ -47,7 +47,7 @@ describe('Container Use Cases (Unit Tests)', () => {
       const container = await useCase.execute({ userId: 'u123', name: 'my-gbase-db' });
 
       expect(container).toBeDefined();
-      expect(container.connectionString).toMatch(/^gbase:\/\/.+:6382$/);
+      expect(container.connectionString).toMatch(/^gbase:\/\/u123@.+:6382$/);
       expect(container.port).toBe(6382);
       expect(mockContainerRepo.getAllActivePorts).toHaveBeenCalled();
       expect(mockDockerService.createAndStartContainer).toHaveBeenCalledWith({
@@ -77,7 +77,7 @@ describe('Container Use Cases (Unit Tests)', () => {
         dockerContainerId: 'docker_c123',
         name: 'my-db',
         port: 6381,
-        connectionString: 'gbase://127.0.0.1:6381',
+        connectionString: 'gbase://u123@127.0.0.1:6381',
       });
       mockContainerRepo.findById.mockResolvedValue(container);
 
@@ -96,7 +96,7 @@ describe('Container Use Cases (Unit Tests)', () => {
         dockerContainerId: 'docker_c123',
         name: 'my-db',
         port: 6381,
-        connectionString: 'gbase://127.0.0.1:6381',
+        connectionString: 'gbase://other_user@127.0.0.1:6381',
       });
       mockContainerRepo.findById.mockResolvedValue(container);
 
