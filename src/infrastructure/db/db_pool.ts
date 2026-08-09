@@ -5,11 +5,12 @@ import { config } from '../../config/env';
 
 export function createPgPool(): Pool {
   if (config.databaseUrl) {
+    const isCloudOrSsl = config.databaseUrl.includes('sslmode=') || 
+                         config.databaseUrl.includes('neon.tech') ||
+                         config.databaseUrl.includes('amazonaws.com');
     return new Pool({
       connectionString: config.databaseUrl,
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      ssl: isCloudOrSsl ? { rejectUnauthorized: false } : false,
     });
   }
 

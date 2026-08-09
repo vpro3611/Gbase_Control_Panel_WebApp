@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node -e \"require('fs').mkdirSync('dist/infrastructure/db', {recursive: true}); require('fs').copyFileSync('src/infrastructure/db/schema.sql', 'dist/infrastructure/db/schema.sql')\"",
     "test": "jest --runInBand",
     "dev:backend": "nodemon --watch src --exec ts-node src/index.ts",
     "dev:frontend": "npm run dev --prefix client",
