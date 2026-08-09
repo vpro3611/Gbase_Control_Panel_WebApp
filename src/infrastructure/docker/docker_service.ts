@@ -32,7 +32,27 @@ export class DockerService implements DockerServiceInterface {
   private docker: Docker;
 
   constructor() {
-    this.docker = new Docker();
+    const socketPath = process.env.DOCKER_SOCKET_PATH || '/var/run/docker.sock';
+    this.docker = new Docker({ socketPath });
+  }
+
+  private async getUsedHostPorts(): Promise<Set<number>> {
+    const usedPorts = new Set<number>();
+    try {
+      const containers = await this.docker.listContainers({ all: true });
+      for (const c of containers) {
+        if (c.Ports) {
+          for (const p of c.Ports) {
+            if (p.PublicPort) {
+              usedPorts.add(p.PublicPort);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // Ignore if Docker API is unavailable
+    }
+    return usedPorts;
   }
 
   private async findFreePort(
@@ -63,7 +83,8 @@ export class DockerService implements DockerServiceInterface {
   async createAndStartContainer(options: CreateContainerOptions): Promise<{ containerId: string; port: number; hostInfo: string }> {
     const rangeStart = options.portRangeStart ?? config.containerPortRangeStart;
     const rangeEnd = options.portRangeEnd ?? config.containerPortRangeEnd;
-    const excludeSet = new Set(options.excludePorts || []);
+    const usedHostPorts = await this.getUsedHostPorts();
+    const excludeSet = new Set([...(options.excludePorts || []), ...usedHostPorts]);
     const hostPort = await this.findFreePort(rangeStart, rangeEnd, excludeSet);
     const hostName = os.hostname();
     const cpus = os.cpus().length;
